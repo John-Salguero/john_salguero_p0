@@ -2,6 +2,8 @@ package com.johnsbank.java.menus;
 
 import com.johnsbank.java.accountdata.Account;
 import com.johnsbank.java.accountdata.User;
+import com.johnsbank.java.services.BankService;
+import com.johnsbank.java.services.BankServiceImplementation;
 import com.johnsbank.java.utilities.MyArrayList;
 
 import java.math.BigDecimal;
@@ -20,12 +22,17 @@ import static com.johnsbank.java.menus.BankingApp.scan;    // Scanner for input
  */
 final class MenuInterface {
 
+    private static final BankService service = BankServiceImplementation.getInstance();
+
     private static final char[] HEX_ARRAY = { // Used for transforming the Hash byte data into human-readable form
             '0', '1', '2', '3',
             '4', '5', '6', '7',
             '8', '9', 'a', 'b',
             'c', 'd', 'e', 'f'};
 
+    /**
+     * Used with the command pattern to accept lambdas
+     */
     private interface Validator {
         boolean validate(String input);
     }
@@ -410,13 +417,13 @@ final class MenuInterface {
 
             }while(!isValid);
 
-            if(confirmed && !DatabaseCommunication.checkUsernameUniqueness(username)) {
+            if(confirmed && !service.usernameIsUnique(username)) {
                 System.out.println("Sorry, the username " + username + "has already been taken, please choose another");
                 confirmed = false;
             }
         }while(!confirmed);
 
-        newUser.username = username;
+        newUser.setUsername(username);
     }
 
     static void inputSSN(User newUser) {
@@ -449,7 +456,7 @@ final class MenuInterface {
             }while(!isValid);
         }while(!confirmed);
 
-        newUser.SSN_Hash = SSNHash;
+        newUser.setSSN_Hash(SSNHash);
     }
 
     static void inputContact(User newUser) {
@@ -504,12 +511,12 @@ final class MenuInterface {
 
         }while(!confirmed);
 
-        newUser.phoneNumber = phoneNumber;
-        newUser.email = email;
-        newUser.addressLine1 =  address1;
-        newUser.addressLine2 = address2;
-        newUser.state = state;
-        newUser.zipCode = zipCode;
+        newUser.setPhoneNumber(phoneNumber);
+        newUser.setEmail(email);
+        newUser.setAddressLine1(address1);
+        newUser.setAddressLine2(address2);
+        newUser.setState(state);
+        newUser.setZipCode(zipCode);
     }
 
 
@@ -545,8 +552,8 @@ final class MenuInterface {
             }while(!valid);
         }while(!confirmed);
 
-        newUser.firstName = firstName;
-        newUser.lastName = lastName;
+        newUser.setFirstName(firstName);
+        newUser.setLastName(lastName);
     }
     static void register(){
         // holds info for the prospective new user
@@ -568,7 +575,7 @@ final class MenuInterface {
         inputUsername(newUser);
         inputPassword(newUser);
 
-        if(!registerUser(newUser))
+        if(service.addUser(newUser) == null)
         {
             // Clear the screen and take the users input
             clear();
@@ -601,22 +608,22 @@ final class MenuInterface {
 
         switch (optionSelected) {
             case 1:
-                newAccount.type = Account.AccountType.SAVINGS;
+                newAccount.setType(Account.AccountType.SAVINGS);
                 break;
             case 2:
-                newAccount.type = Account.AccountType.CHECKING;
+                newAccount.setType(Account.AccountType.CHECKING);
                 break;
             case 3:
-                newAccount.type = Account.AccountType.MMA;
+                newAccount.setType(Account.AccountType.MMA);
                 break;
             case 4:
-                newAccount.type = Account.AccountType.CD;
+                newAccount.setType(Account.AccountType.CD);
                 break;
             case 5:
-                newAccount.type = Account.AccountType.IRA;
+                newAccount.setType(Account.AccountType.IRA);
                 break;
             case 6:
-                newAccount.type = Account.AccountType.BROKERAGE;
+                newAccount.setType(Account.AccountType.BROKERAGE);
                 break;
             default:
                 return false;
@@ -627,14 +634,14 @@ final class MenuInterface {
     private static void setUniqueID(Account newAccount) {
         StringBuilder uniqueId = new StringBuilder();
 
-        for(User elem : newAccount.owners)
+        for(User elem : newAccount.getOwners())
         {
-            uniqueId.append(elem.username);
+            uniqueId.append(elem.getUsername());
         }
         uniqueId.append(new Date());
 
-        newAccount.active = true;
-        newAccount.accountID = getMessageDigest(uniqueId.toString());
+        newAccount.setActive(true);
+        newAccount.setAccountID(getMessageDigest(uniqueId.toString()));
     }
     private static boolean setIsJoint() {
         boolean isJoint = false;
@@ -658,23 +665,23 @@ final class MenuInterface {
     }
 
     private static void setNewOwners(User user, Account newAccount, boolean isJoint) {
-        newAccount.owners.add(user);
+        newAccount.getOwners().add(user);
         while(isJoint) {
             System.out.print("Please enter the username of the account you wish to add as a co-owner");
             System.out.print("Enter an empty line to stop specifying co-owners");
             String input = scan.nextLine();
             if(input.equals("") ) {
                 break;
-            } else if(!checkUsernameUniqueness(input)){
-                for(User elem : newAccount.owners) {
-                    if(elem.username.equals(input)) {
+            } else if(!service.usernameIsUnique(input)){
+                for(User elem : newAccount.getOwners()) {
+                    if(elem.getUsername().equals(input)) {
                         System.out.println("You have already specified " + input);
                         continue;
                     }
                     // add the joint owner to the list of owners
                     User jointOwner = new User();
-                    jointOwner.username = input;
-                    newAccount.owners.add(jointOwner);
+                    jointOwner.setUsername(input);
+                    newAccount.getOwners().add(jointOwner);
                 }
             } else
                 System.out.println("\nThat user is not in our system\n");
@@ -684,7 +691,7 @@ final class MenuInterface {
     static boolean confirmAccount(Account newAccount) {
         while(true)
         {
-            System.out.print("\n\nDo you wish to confirm opening " + newAccount.type.toString() + " account? (Y/n): ");
+            System.out.print("\n\nDo you wish to confirm opening " + newAccount.getType().toString() + " account? (Y/n): ");
             String input = scan.nextLine();
             if(input.equalsIgnoreCase("y") || input.equalsIgnoreCase("yes"))
                 return true;
@@ -709,8 +716,8 @@ final class MenuInterface {
 
             MyArrayList<String> centeredBankAccounts = new MyArrayList<>();
             int longestLength = 0;
-            for (Account account : user.accounts) {
-                String bankAccountOption = (centeredBankAccounts.getCount() + 1) + ". " + account.accountID.substring(0, 7) + "... Type: " + account.type;
+            for (Account account : user.getAccounts()) {
+                String bankAccountOption = (centeredBankAccounts.getCount() + 1) + ". " + account.getAccountID().substring(0, 7) + "... Type: " + account.getType();
                 centeredBankAccounts.add(bankAccountOption);
                 if (longestLength < bankAccountOption.length())
                     longestLength = bankAccountOption.length();
@@ -765,7 +772,7 @@ final class MenuInterface {
             optionSelected = selectOptions((short)6);
         }
         Account newAccount = new Account();
-        newAccount.balance = new BigDecimal(0);
+        newAccount.setBalance(new BigDecimal(0));
 
         if (!setAccountType(optionSelected, newAccount))
             return;
@@ -774,8 +781,8 @@ final class MenuInterface {
         setUniqueID(newAccount);
 
         if(confirmAccount(newAccount)) {
-            DatabaseCommunication.registerAccount(newAccount);
-            user.accounts.add(newAccount);
+            service.addAccount(newAccount);
+            user.getAccounts().add(newAccount);
 
             String[] confirmationMessage = {
                     "Congratulations! you have opened a new Account",
@@ -854,7 +861,7 @@ final class MenuInterface {
                 password = getMessageDigest(scan.nextLine());
             }
 
-            user = validateLogin(username, password);
+            user = service.logUserIn(username, password);
             if(user != null)
                 break;
         }
