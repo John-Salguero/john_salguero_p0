@@ -23,31 +23,31 @@ public class JDBCConnection {
 
     public Connection getConnection() {
 
-        if(connection == null){
+        try {
+        if(connection == null || connection.isValid(30)){
 
             Properties props = new Properties();
             try {
                 props.load(JDBCConnection.class.getClassLoader().getResourceAsStream("credentials"));
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException("You do not have the correct Credentials to access the database!", e);
             }
 
             String endpoint = props.getProperty("endpoint");
             String username = props.getProperty("username");
             String pass = props.getProperty("password");
 
-            try {
-                connection = DriverManager
-                        .getConnection(endpoint,
-                                username, pass);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            connection = DriverManager
+                    .getConnection(endpoint,
+                            username, pass);
         }
-
+        }catch (SQLException e) {
+            return null; // can't establish a connection
+        }
 
         return connection;
     }
 
+    /* Adheres to the Singleton Pattern */
     public static JDBCConnection getInstance() {return instance;}
 }

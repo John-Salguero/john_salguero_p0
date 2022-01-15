@@ -1,9 +1,12 @@
 package com.johnsbank.java.menus;
 
+import com.johnsbank.java.services.BankService;
+import com.johnsbank.java.services.BankServiceImplementation;
+
 import java.util.Scanner;                                                    // The scanner for input
 import static com.johnsbank.java.menus.ScreenPrinter.*;                      // All the functions to print to the screen
 import static com.johnsbank.java.menus.MenuInterface.*;                      // Controls the menu selection
-import static com.johnsbank.java.services.DatabaseCommunication.isConnected; // Returns the connected state of the DB
+//import static com.johnsbank.java.services.DatabaseCommunication.isConnected; // Returns the connected state of the DB
 
 final class BankingApp {
 
@@ -18,9 +21,10 @@ final class BankingApp {
      */
     public static void main(String[] args) {
 
+        BankService service = BankServiceImplementation.getInstance();
         while (running) {
 
-            if(isConnected()) {
+            if(service.isConnected()) {
                 // The message greeting the user to the application
                 String[] welcomeMessage = {
                         "Welcome to The John Banking App",
@@ -44,7 +48,7 @@ final class BankingApp {
                 if(scan.nextLine().equalsIgnoreCase("exit"))
                     running = false;
                 else
-                    DatabaseCommunication.connect();
+                    service.isConnected();
             }
         }
 

@@ -11,7 +11,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Locale;
 
-import static com.johnsbank.java.services.DatabaseCommunication.*;
 import static com.johnsbank.java.menus.ScreenPrinter.*;    // All the functions to print to the screen
 import static com.johnsbank.java.menus.BankingApp.running; // Whether the app is running or not
 import static com.johnsbank.java.menus.BankingApp.scan;    // Scanner for input
@@ -379,7 +378,7 @@ final class MenuInterface {
 
         } while(!confirmed);
 
-        newUser.pass_Hash = passHash;
+        newUser.setPass_Hash(passHash);
         System.out.println("Your password has been set!");
     }
 
