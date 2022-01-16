@@ -1,4 +1,4 @@
-package com.johnsbank.java.accountdata;
+package com.johnsbank.java.models;
 
 import com.johnsbank.java.utilities.MyArrayList;
 import com.johnsbank.java.utilities.MyLinkedList;

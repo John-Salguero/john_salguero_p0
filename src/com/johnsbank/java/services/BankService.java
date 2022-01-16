@@ -1,8 +1,8 @@
 package com.johnsbank.java.services;
 
-import com.johnsbank.java.accountdata.Account;
-import com.johnsbank.java.accountdata.Transaction;
-import com.johnsbank.java.accountdata.User;
+import com.johnsbank.java.models.Account;
+import com.johnsbank.java.models.Transaction;
+import com.johnsbank.java.models.User;
 import com.johnsbank.java.utilities.MyArrayList;
 import com.johnsbank.java.utilities.MyLinkedList;
 import com.johnsbank.java.utilities.ResourceNotFoundException;
@@ -36,7 +36,7 @@ public interface BankService {
     public MyLinkedList<Transaction> getAllTransactions(Account account);
 
     // Business Logic operations
-    public Transaction sendTransaction(Transaction newTransaction);
+    public boolean sendTransaction(Transaction newTransaction);
     public boolean makeOwner(Account account, User owner) throws ResourceNotFoundException;
     public boolean revokeOwner(Account account, User owner) throws ResourceNotFoundException;
     public boolean usernameIsUnique(String username);

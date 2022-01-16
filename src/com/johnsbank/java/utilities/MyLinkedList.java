@@ -36,6 +36,13 @@ public class MyLinkedList<T> implements Iterable<T> {
         Node<T> it = head;
         Node<T> newNode = new Node<T>(data);
 
+        // we are inserting the first element into the list
+        if(it == null)
+        {
+            head = newNode;
+            return;
+        }
+
         if(comparator.operation(newNode.data, head.data)){
             head = newNode;
             newNode.next = it;

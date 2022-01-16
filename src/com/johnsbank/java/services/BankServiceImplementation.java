@@ -1,8 +1,8 @@
 package com.johnsbank.java.services;
 
-import com.johnsbank.java.accountdata.Account;
-import com.johnsbank.java.accountdata.Transaction;
-import com.johnsbank.java.accountdata.User;
+import com.johnsbank.java.models.Account;
+import com.johnsbank.java.models.Transaction;
+import com.johnsbank.java.models.User;
 import com.johnsbank.java.repositories.BankRepository;
 import com.johnsbank.java.repositories.BankRepositoryImplementation;
 import com.johnsbank.java.utilities.MyArrayList;
@@ -10,6 +10,7 @@ import com.johnsbank.java.utilities.MyLinkedList;
 import com.johnsbank.java.utilities.ResourceNotFoundException;
 
 import java.math.BigDecimal;
+import java.sql.Date;
 
 public class BankServiceImplementation implements BankService{
 
@@ -192,7 +193,7 @@ public class BankServiceImplementation implements BankService{
      * @return - The transaction made, if one was made
      */
     @Override
-    public Transaction sendTransaction(Transaction newTransaction) {
+    public boolean sendTransaction(Transaction newTransaction) {
 
         // get the Account the funds are going to
         Account to;
@@ -220,15 +221,15 @@ public class BankServiceImplementation implements BankService{
                         repository.updateAccount(from);
                         if(to != null) // if the to account is internal, update account
                             repository.updateAccount(to);
-                        return  retVal;
+                        return  true;
                     }
             }
         } catch (ResourceNotFoundException e) // The bank does not control the account making the transaction
         {
-            return null;
+            return false;
         }
 
-        return null;
+        return false;
     }
 
     /**
@@ -380,6 +381,8 @@ public class BankServiceImplementation implements BankService{
         try {
             account = getAccount(account.getAccountID());
             account.setBalance(account.getBalance().add(amount));
+            repository.addTransaction(
+                    new Transaction(new Date(System.currentTimeMillis()), amount, null, account.getAccountID()));
             repository.updateAccount(account);
         } catch (ResourceNotFoundException e) {
             return false; // the account does not exist
@@ -400,8 +403,10 @@ public class BankServiceImplementation implements BankService{
         try {
             account = getAccount(account.getAccountID());
             if(account.getBalance().compareTo(amount) > -1) { // if there are enough funds
-            account.setBalance(account.getBalance().subtract(amount));
-            repository.updateAccount(account);
+                account.setBalance(account.getBalance().subtract(amount));
+                repository.addTransaction(
+                        new Transaction(new Date(System.currentTimeMillis()), amount, account.getAccountID(), null));
+                return repository.updateAccount(account) != null;
             }
         } catch (ResourceNotFoundException e) {
             return false; // the account does not exist

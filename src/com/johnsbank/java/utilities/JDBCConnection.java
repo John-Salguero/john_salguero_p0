@@ -9,6 +9,7 @@ import java.util.Properties;
 public class JDBCConnection {
 
     {
+        // Upon loading the class into memory, load the driver for JDBC as well
         try {
             Class.forName("org.postgresql.Driver");
         } catch (ClassNotFoundException e) {

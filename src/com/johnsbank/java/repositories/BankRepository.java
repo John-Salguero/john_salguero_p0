@@ -1,8 +1,8 @@
 package com.johnsbank.java.repositories;
 
-import com.johnsbank.java.accountdata.Account;
-import com.johnsbank.java.accountdata.Transaction;
-import com.johnsbank.java.accountdata.User;
+import com.johnsbank.java.models.Account;
+import com.johnsbank.java.models.Transaction;
+import com.johnsbank.java.models.User;
 import com.johnsbank.java.utilities.MyArrayList;
 import com.johnsbank.java.utilities.MyLinkedList;
 import com.johnsbank.java.utilities.ResourceNotFoundException;

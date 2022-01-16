@@ -6,7 +6,7 @@ import java.io.IOException; // Thrown when reading from input stream
 /**
  * The class that holds the functions used to print to screen
  */
-final class ScreenPrinter {
+public final class ScreenPrinter {
 
     /**
      * Clears the screen
@@ -119,10 +119,54 @@ final class ScreenPrinter {
     }
 
     /**
+     * Prints the messages to be printed inside the frame without
+     * The top bar
+     * @param msg The message or set of messages to be framed
+     */
+    static void bottomFramePrint(String[] msg) {
+
+
+        // print out the framed filler lines
+        printFramedFiller((short)1);
+        // print out the message
+        centerFramedPrints(msg);
+        // print out the framed filler lines
+        printFramedFiller((short)1);
+
+        // Print the bottom bar of the frame
+        System.out.print('|');
+        for(int i = 0; i < 78; ++i)
+            System.out.print("=");
+        System.out.println('|');
+    }
+
+    /**
+     * Prints the messages to be printed inside the frame without
+     * The bottom bar
+     * @param msg The message or set of messages to be framed
+     */
+    static void topFramePrint(String[] msg) {
+
+
+        // Print the top bar of the frame
+        System.out.print('|');
+        for(int i = 0; i < 78; ++i)
+            System.out.print("=");
+        System.out.println('|');
+
+        // print out the framed filler lines
+        printFramedFiller((short)1);
+        // print out the message
+        centerFramedPrints(msg);
+        // print out the framed filler lines
+        printFramedFiller((short)1);
+    }
+
+    /**
      * Prints the messages to be printed inside the frame
      * @param msg The message or set of messages to be framed
      */
-    static void framePrint(String[] msg) {
+    public static void framePrint(String[] msg) {
 
         // Print the top bar of the frame
         System.out.print('|');

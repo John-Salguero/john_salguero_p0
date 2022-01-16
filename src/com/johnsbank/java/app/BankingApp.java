@@ -1,17 +1,15 @@
-package com.johnsbank.java.menus;
+package com.johnsbank.java.app;
 
-import com.johnsbank.java.services.BankService;
-import com.johnsbank.java.services.BankServiceImplementation;
-
+import com.johnsbank.java.services.BankService;                              // Interface to the banking service
+import com.johnsbank.java.services.BankServiceImplementation;                // Instance of the Banking Service
 import java.util.Scanner;                                                    // The scanner for input
 import static com.johnsbank.java.menus.ScreenPrinter.*;                      // All the functions to print to the screen
 import static com.johnsbank.java.menus.MenuInterface.*;                      // Controls the menu selection
-//import static com.johnsbank.java.services.DatabaseCommunication.isConnected; // Returns the connected state of the DB
 
-final class BankingApp {
+public final class BankingApp {
 
-    static boolean running = true;                         // Whether the app is running or not
-    static final Scanner scan = new Scanner(System.in);    // The scanner for input
+    public static boolean running = true;                                    // Whether the app is running or not
+    public static final Scanner scan = new Scanner(System.in);               // The scanner for input
 
 
     /**
@@ -21,6 +19,7 @@ final class BankingApp {
      */
     public static void main(String[] args) {
 
+        // Instantiates the instance to the banking service
         BankService service = BankServiceImplementation.getInstance();
         while (running) {
 
@@ -37,14 +36,14 @@ final class BankingApp {
                 mainMenu();
             }
             else {
-                // The message greeting the user to the application
-                String[] welcomeMessage = {
+                // The message used if the connection to the database is no longer established
+                String[] disconnectedMessage = {
                         "Connection to the Database has been lost!",
                         "Do you have the proper authority? Is the network down?",
                         "Enter \"Exit\" to shutdown or Press Enter to retry.",
                 };
 
-                framePrint(welcomeMessage);
+                framePrint(disconnectedMessage);
                 if(scan.nextLine().equalsIgnoreCase("exit"))
                     running = false;
                 else

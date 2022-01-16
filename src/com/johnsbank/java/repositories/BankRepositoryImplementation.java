@@ -1,8 +1,8 @@
 package com.johnsbank.java.repositories;
 
-import com.johnsbank.java.accountdata.Account;
-import com.johnsbank.java.accountdata.Transaction;
-import com.johnsbank.java.accountdata.User;
+import com.johnsbank.java.models.Account;
+import com.johnsbank.java.models.Transaction;
+import com.johnsbank.java.models.User;
 import com.johnsbank.java.utilities.JDBCConnection;
 import com.johnsbank.java.utilities.MyArrayList;
 import com.johnsbank.java.utilities.MyLinkedList;
@@ -306,10 +306,10 @@ public class BankRepositoryImplementation implements BankRepository{
                 return buildAccount(rs);
 
         } catch (SQLException e) {
-            throw new RuntimeException("Could not update user from Database!",e);
+            throw new RuntimeException("Could not update account from Database!",e);
         }
 
-        throw new ResourceNotFoundException("The user could not be found in the database!");
+        throw new ResourceNotFoundException("The account could not be found in the database!");
     }
 
     /**
@@ -422,7 +422,7 @@ public class BankRepositoryImplementation implements BankRepository{
                 return buildTransaction(rs);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Could not add an Account to the Database!", e);
+            throw new RuntimeException("Could not add an Transaction to the Database!", e);
         }
 
         return null;
@@ -452,10 +452,10 @@ public class BankRepositoryImplementation implements BankRepository{
             }
         } catch (SQLException e)
         {
-            throw new RuntimeException("Could not get user from Database!",e);
+            throw new RuntimeException("Could not get transaction from Database!",e);
         }
 
-        throw new ResourceNotFoundException("Could not Locate User in Database!");
+        throw new ResourceNotFoundException("Could not Locate transaction in Database!");
     }
 
     /**

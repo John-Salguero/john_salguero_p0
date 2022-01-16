@@ -1,80 +1,38 @@
 package com.johnsbank.java.menus;
 
-import com.johnsbank.java.accountdata.Account;
-import com.johnsbank.java.accountdata.User;
+import com.johnsbank.java.models.Account;
+import com.johnsbank.java.models.Transaction;
+import com.johnsbank.java.models.User;
 import com.johnsbank.java.services.BankService;
 import com.johnsbank.java.services.BankServiceImplementation;
+import com.johnsbank.java.utilities.HashGenerator;
 import com.johnsbank.java.utilities.MyArrayList;
+import com.johnsbank.java.utilities.MyLinkedList;
+import com.johnsbank.java.utilities.ResourceNotFoundException;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.text.NumberFormat;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Locale;
 
-import static com.johnsbank.java.menus.ScreenPrinter.*;    // All the functions to print to the screen
-import static com.johnsbank.java.menus.BankingApp.running; // Whether the app is running or not
-import static com.johnsbank.java.menus.BankingApp.scan;    // Scanner for input
+import static com.johnsbank.java.menus.ScreenPrinter.*;  // All the functions to print to the screen
+import static com.johnsbank.java.app.BankingApp.running; // Whether the app is running or not
+import static com.johnsbank.java.app.BankingApp.scan;    // Scanner for input
 
 /**
  * Used to control the flow of user experience, menu selection
  */
-final class MenuInterface {
+public final class MenuInterface {
 
     private static final BankService service = BankServiceImplementation.getInstance();
-
-    private static final char[] HEX_ARRAY = { // Used for transforming the Hash byte data into human-readable form
-            '0', '1', '2', '3',
-            '4', '5', '6', '7',
-            '8', '9', 'a', 'b',
-            'c', 'd', 'e', 'f'};
+    private static final HashGenerator hash = HashGenerator.getInstance();
 
     /**
      * Used with the command pattern to accept lambdas
      */
     private interface Validator {
         boolean validate(String input);
-    }
-
-    /**
-     * Transforms the given byte array into a hexadecimal number in string format
-     * @param bytes the byte array to transform
-     * @return a hexadecimal representation of the array in string format
-     */
-    public static String bytesToHex(byte[] bytes) {
-        // array of characters in ascii form representing the data in byte array
-        char[] hexChars = new char[bytes.length * 2];
-
-        // convert each byte into a hexadecimal value and convert that into ascii format
-        for (int j = 0; j < bytes.length; j++) {
-            int curByte = bytes[j];
-            // bit-shift the byte by 4 to retrieve the higher WORD and use that as an index into the array to convert
-            hexChars[j * 2] = HEX_ARRAY[(curByte >>> 4) & 0x0F];
-            // AND the lower WORD by 16 to isolate it and use that as an index into the array to convert
-            hexChars[j * 2 + 1] = HEX_ARRAY[curByte & 0x0F];
-        }
-        return new String(hexChars);
-    }
-
-    /**
-     * The method that securely Hashes User's passwords
-     */
-    private static String getMessageDigest(String pass){
-
-        MessageDigest digestAlg = null; // The digest object used
-
-        // Hash the password to securely save and compare
-        try {
-            digestAlg = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error: SHA-256 could not be used!", e);
-        }
-
-        byte[] hash = digestAlg.digest(pass.getBytes(StandardCharsets.UTF_8));
-
-
-        return bytesToHex(hash);
     }
 
     static private class PhoneValidator implements Validator {
@@ -350,7 +308,7 @@ final class MenuInterface {
         boolean confirmed = false;
         do {
             String password;
-            System.out.println(" Please enter a password of at least 8 characters with at least 1 capital letter," +
+            System.out.println("Please enter a password of at least 8 characters with at least 1 capital letter," +
                     "1 lowercase letter, 1 number, and 1 special {!, @, #, $, %, _} character.");
             // if a console is attached, make the password secure
             if (System.console() != null) {
@@ -380,7 +338,7 @@ final class MenuInterface {
                 }
             }
 
-            passHash = getMessageDigest(password);
+            passHash = hash.getMessageDigest(password);
             confirmed = true;
 
         } while(!confirmed);
@@ -433,7 +391,7 @@ final class MenuInterface {
         do {
             String[] SSNForms = {"xxx-xx-xxxx"};
             String SSN = ValidateInput("SSN", SSNForms, new SSNValidator());
-            SSNHash = getMessageDigest(SSN);
+            SSNHash = hash.getMessageDigest(SSN);
 
             boolean isValid = false;
             do{
@@ -489,7 +447,7 @@ final class MenuInterface {
                 System.out.println("Phone Number: " + phoneNumber);
                 System.out.println("Email: " + email);
                 System.out.println("Address Line 1: " + address1);
-                System.out.println("Address Line 2: " + address2);
+                System.out.println("City: " + address2);
                 System.out.println("State: " + state);
                 System.out.println("Zipcode: " + zipCode);
                 System.out.print("Confirm your contact information? (Y/n): ");
@@ -641,7 +599,7 @@ final class MenuInterface {
         uniqueId.append(new Date());
 
         newAccount.setActive(true);
-        newAccount.setAccountID(getMessageDigest(uniqueId.toString()));
+        newAccount.setAccountID(hash.getMessageDigest(uniqueId.toString()));
     }
     private static boolean setIsJoint() {
         boolean isJoint = false;
@@ -665,33 +623,37 @@ final class MenuInterface {
     }
 
     private static void setNewOwners(User user, Account newAccount, boolean isJoint) {
-        newAccount.getOwners().add(user);
+        MyArrayList<User> owners = new MyArrayList<>();
+        owners.add(user);
         while(isJoint) {
-            System.out.print("Please enter the username of the account you wish to add as a co-owner");
-            System.out.print("Enter an empty line to stop specifying co-owners");
+            System.out.println("Please enter the username of the account you wish to add as a co-owner");
+            System.out.print("Enter an empty line to stop specifying co-owners: ");
             String input = scan.nextLine();
             if(input.equals("") ) {
                 break;
             } else if(!service.usernameIsUnique(input)){
-                for(User elem : newAccount.getOwners()) {
+                for(User elem : owners) {
                     if(elem.getUsername().equals(input)) {
                         System.out.println("You have already specified " + input);
                         continue;
                     }
-                    // add the joint owner to the list of owners
-                    User jointOwner = new User();
-                    jointOwner.setUsername(input);
-                    newAccount.getOwners().add(jointOwner);
                 }
+                // add the joint owner to the list of owners
+                User jointOwner = new User();
+                jointOwner.setUsername(input);
+                owners.add(jointOwner);
+                System.out.println("Co-owner " + input + " has been specified.\n");
             } else
                 System.out.println("\nThat user is not in our system\n");
         }
+
+        newAccount.setOwners(owners);
     }
 
     static boolean confirmAccount(Account newAccount) {
         while(true)
         {
-            System.out.print("\n\nDo you wish to confirm opening " + newAccount.getType().toString() + " account? (Y/n): ");
+            System.out.print("\nDo you wish to confirm opening " + newAccount.getType().toString() + " account? (Y/n): ");
             String input = scan.nextLine();
             if(input.equalsIgnoreCase("y") || input.equalsIgnoreCase("yes"))
                 return true;
@@ -701,51 +663,533 @@ final class MenuInterface {
         }
     }
 
-    private static void viewAccounts(User user) {
+    /**
+     * Lets the user check their available balance
+     * @param account - The account to check
+     */
+    private static void checkBalance(Account account) {
+        // Clear the screen and take the users input
+        clear();
 
+        // Instructions for the viewing the menu
+        String[] instructions = {
+                "Account Selected",
+                account.getAccountID(),
+                "Account Type: " +account.getType().toString(),
+                "Current available Balance: " + NumberFormat.getCurrencyInstance(Locale.US)
+                        .format(account.getBalance())
+        };
+        framePrint(instructions);
+        scan.nextLine();
+    }
+
+    /**
+     * Given an account, lets the user make a withdrawal
+     * @param account - The account to withdraw from
+     */
+    private static void withdraw(Account account) {
+        // Clear the screen and take the users input
+        clear();
+
+        // Instructions for the viewing the menu
+        String[] instructions = {
+                "To make a withdrawal, enter the amount you wish to withdraw",
+                "Current available Balance: " + NumberFormat.getCurrencyInstance(Locale.US)
+                        .format(account.getBalance())
+        };
+        framePrint(instructions);
+
+
+        System.out.print("Enter the amount: ");
+        String input = scan.nextLine();
+        while (!input.matches("(0|[1-9][0-9]{0,2})(,\\d{3})*(\\.\\d{2})?")) {
+            System.out.println("That is not a valid amount, Please enter an amount in the form of 5,432.10\n");
+            System.out.print("Enter the amount: ");
+            input = scan.nextLine();
+        }
+
+        BigDecimal amountWithdrawn = new BigDecimal(input.replace(",",""));
+        if(account.getBalance().compareTo(amountWithdrawn) > -1) {
+            if (service.makeWithdrawal(account, amountWithdrawn)) { // The withdrawal is successful
+                clear();
+                String[] output = {"You successfully withdrew: " +
+                        NumberFormat.getCurrencyInstance(Locale.US).format(amountWithdrawn)};
+                framePrint(output);
+                account.setBalance(account.getBalance().subtract(amountWithdrawn));
+                scan.nextLine();
+                return;
+            }
+        }else // There is not enough funds
+            {
+                System.out.println("You do not have enough funds.");
+            }
+
+        System.out.println("The Withdrawal is Unsuccessful please try again.");
+        scan.nextLine();
+    }
+
+    /**
+     * Given an account, lets the user make a deposit
+     * @param account - The account to deposit into
+     */
+    private static void deposit(Account account) {
+        // Clear the screen and take the users input
+        clear();
+
+        // Instructions for the viewing the menu
+        String[] instructions = {
+                "To make a deposit, enter the amount you wish to deposit"
+        };
+        framePrint(instructions);
+
+
+        System.out.print("Enter the amount: ");
+        String input = scan.nextLine();
+        while (!input.matches("(0|[1-9][0-9]{0,2})(,\\d{3})*(\\.\\d{2})?")) {
+            System.out.println("That is not a valid amount, Please enter an amount in the form of 5,432.10\n");
+            System.out.print("Enter the amount: ");
+            input = scan.nextLine();
+        }
+
+        BigDecimal amountDeposited = new BigDecimal(input.replace(",",""));
+        if (service.makeDeposit(account, amountDeposited)) { // The deposit is successful
+            clear();
+            String[] output = {"You successfully deposited: " +
+                    NumberFormat.getCurrencyInstance(Locale.US).format(amountDeposited)};
+            framePrint(output);
+            account.setBalance(account.getBalance().add(amountDeposited));
+            scan.nextLine();
+            return;
+        }
+
+        System.out.println("The Deposit is Unsuccessful please try again.");
+        scan.nextLine();
+    }
+
+    /**
+     * Given an account, lets the user choose an account to Transfer money to
+     * @param user - The user who owns both accounts
+     * @param account - The account transferring from
+     */
+    private static  void internalTransfer(User user, Account account) {
+
+        // Clear the screen and take the users input
+        clear();
+
+        // Instructions for the viewing the menu
+        String[] instructions = {
+                "Internal Account Transfer",
+                account.getAccountID(),
+                "Available Balance: " +
+                        NumberFormat.getCurrencyInstance(Locale.US).format(account.getBalance()),
+                "Select the one you wish to transfer money to"
+        };
+
+
+        // Set up the options
+        MyArrayList<String> centeredBankAccounts = new MyArrayList<>();
+        int longestLength = 0;
+        for (Account elem : user.getAccounts()) {
+            // Remove the same account from the set of options
+            if(elem.getAccountID().equalsIgnoreCase(account.getAccountID()))
+                continue;
+            // Add the other accounts and keep track of the length to keep the options centered
+            String bankAccountOption = (centeredBankAccounts.getCount() + 1) + ") " +
+                    elem.getAccountID().substring(0, 7) + "... Type: " + elem.getType();
+            centeredBankAccounts.add(bankAccountOption);
+            if (longestLength < bankAccountOption.length())
+                longestLength = bankAccountOption.length();
+        }
+        // add an exit option then center the options using spaces as padding
+        centeredBankAccounts.add((centeredBankAccounts.getCount() + 1) + ") Exit");
+        String spaces = "                                         ";
+        for (int i = 0; i < centeredBankAccounts.getCount(); ++i) {
+
+            String centeredString = centeredBankAccounts.get(i);
+            int length = centeredString.length();
+            if (length < longestLength)
+                centeredBankAccounts.replace(i,centeredString + spaces.substring(0, longestLength - length));
+        }
+        // copy over the options to a String Array of the right size so framed printing can be achieved
+        String[] options = new String[centeredBankAccounts.getCount()];
+        System.arraycopy(centeredBankAccounts.getData(), 0, options, 0, options.length);
+
+
+        //  Print out the instructions and options
+        topFramePrint(instructions);
+        bottomFramePrint(options);
+
+        // Acquire the Account to transfer money to
+        short optionSelected = selectOptions((short) options.length);
+        while (optionSelected == -1) {
+            System.out.println("That is not a valid option, Please select again!");
+            optionSelected = selectOptions((short) options.length);
+        }
+        if (optionSelected == options.length)
+            return;
+
+        String accountTo = user.getAccounts().get(--optionSelected).getAccountID();
+        if(accountTo.equalsIgnoreCase(account.getAccountID()))
+            accountTo = user.getAccounts().get(++optionSelected).getAccountID();
+
+
+        // Acquire how much money to transfer
+        System.out.print("Enter the amount you wish to transfer: ");
+        String input = scan.nextLine();
+        while (!input.matches("(0|[1-9][0-9]{0,2})(,\\d{3})*(\\.\\d{2})?")) {
+            System.out.println("That is not a valid amount, Please enter an amount in the form of 5,432.10\n");
+            System.out.print("Enter the amount: ");
+            input = scan.nextLine();
+        }
+        BigDecimal amountTransferred = new BigDecimal(input.replace(",",""));
+
+        // Confirm the transfer
+        boolean isValid = false;
+        do{
+            System.out.println("\nTransfer amount: " +
+                    NumberFormat.getCurrencyInstance(Locale.US).format(amountTransferred));
+            System.out.println("Transfer From: " + account.getType().toString() + " " + account.getAccountID());
+            System.out.println("Transfer To: " + accountTo);
+            System.out.print("Confirm the Transfer? (Y/n): ");
+            input = scan.nextLine();
+            if(input.equalsIgnoreCase("y") || input.equalsIgnoreCase("yes")) {
+                isValid = true;
+            }
+            else if(input.equalsIgnoreCase("n") || input.equalsIgnoreCase("no"))
+            {
+                return;
+            }
+            else
+                System.out.println("That is not a valid option. Please respond with 'Y' or 'N'.");
+
+        }while(!isValid);
+
+        // Transfer has been confirmed, send out the Transfer
+        if(service.sendTransaction(new Transaction(new java.sql.Date(System.currentTimeMillis()), amountTransferred,
+                account.getAccountID(), accountTo))){
+            // set the accounts to have the correct values client-side
+            account.setBalance(account.getBalance().subtract(amountTransferred));
+            user.getAccounts().get(optionSelected).setBalance(user.getAccounts()
+                    .get(optionSelected).getBalance().add(amountTransferred));
+            System.out.println("You successfully transferred " +
+                    NumberFormat.getCurrencyInstance(Locale.US).format(amountTransferred) +
+                    " from your account to the specified account.");
+        } else  { // The Transfer was unsuccessful
+            System.out.println("\nThe transaction was rejected, if you have enough funds, there could be a hold" +
+                    "on your account - contact the John Bank for more information");
+        }
+
+        scan.nextLine();
+    }
+
+    /**
+     * Given an account, lets the user specify an account and an amount to transfer money to
+     * @param account - The account that is making a transaction
+     */
+    private static  void externalTransfer(Account account) {
+
+        // Clear the screen and take the users input
+        clear();
+        // The instructions to select the type of Transfer
+        String[] instructions = {
+                "External Transfer from Account: ",
+                account.getAccountID(),
+                "Balance Available: " +
+                        NumberFormat.getCurrencyInstance(Locale.US).format(account.getBalance())
+        };
+        framePrint(instructions);
+
+        // Acquire the Account to transfer money to
+        System.out.print("Input in the account ID: ");
+        String input = scan.nextLine();
+        input = input.toLowerCase(Locale.US);
+        while(!input.matches("[a-f0-9]{64}")) {
+            System.out.println("That is incorrect format, please input a user account in this bank's format");
+            System.out.println("The format should look like " +
+                    "631702663e53b9f1f2d925d3ec20dcc4d685491aae601df7626d15503c99a9b7");
+
+            System.out.print("Input in the account ID: ");
+            input = scan.nextLine();
+        }
+        String accountTo = input;
+
+        // Acquire how much money to transfer
+        System.out.print("Enter the amount you wish to transfer: ");
+        input = scan.nextLine();
+        while (!input.matches("(0|[1-9][0-9]{0,2})(,\\d{3})*(\\.\\d{2})?")) {
+            System.out.println("That is not a valid amount, Please enter an amount in the form of 5,432.10\n");
+            System.out.print("Enter the amount: ");
+            input = scan.nextLine();
+        }
+        BigDecimal amountTransferred = new BigDecimal(input.replace(",",""));
+
+        // Confirm the transfer
+        boolean isValid = false;
+        do{
+            System.out.println("\nTransfer amount: " +
+                    NumberFormat.getCurrencyInstance(Locale.US).format(amountTransferred));
+            System.out.println("Transfer From: " + account.getType().toString() + " " + account.getAccountID());
+            System.out.println("Transfer To: " + accountTo);
+            System.out.print("Confirm the Transfer? (Y/n): ");
+            input = scan.nextLine();
+            if(input.equalsIgnoreCase("y") || input.equalsIgnoreCase("yes")) {
+                isValid = true;
+            }
+            else if(input.equalsIgnoreCase("n") || input.equalsIgnoreCase("no"))
+            {
+                return;
+            }
+            else
+                System.out.println("That is not a valid option. Please respond with 'Y' or 'N'.");
+
+        }while(!isValid);
+
+        // Transfer has been confirmed, send out the Transfer
+        if(service.sendTransaction(new Transaction(new java.sql.Date(System.currentTimeMillis()), amountTransferred,
+                account.getAccountID(), accountTo))){
+            account.setBalance(account.getBalance().subtract(amountTransferred));
+            System.out.println("You successfully transferred " +
+                    NumberFormat.getCurrencyInstance(Locale.US).format(amountTransferred) +
+                    " from your account to the specified account.");
+        } else  { // The Transfer was unsuccessful
+            System.out.println("\nThe transaction was rejected, if you have enough funds, there could be a hold" +
+                    "on your account - contact the John Bank for more information");
+        }
+
+        scan.nextLine();
+    }
+
+    /**
+     * Given an account, lets the user transfer money
+     * @param account - The account to withdraw from
+     */
+    private static void transfer(User user, Account account) {
+        // Clear the screen and take the users input
+        clear();
+
+        if(user.getAccounts().getCount() > 1) {
+            // The instructions to select the type of Transfer
+            String[] instructions = {
+                    "Would you like to internally transfer funds",
+                    "between accounts or externally transfer funds?",
+                    "1) Internal Transfer",
+                    "2) External Transfer"
+            };
+            framePrint(instructions);
+
+
+            short optionSelected = selectOptions((short) 2);
+            while (optionSelected == -1) {
+                System.out.println("That is not a valid option, Please select again!");
+                optionSelected = selectOptions((short) 2);
+            }
+
+            if(optionSelected == 1)
+                internalTransfer(user, account);
+            else
+                externalTransfer(account);
+        }
+        else
+            externalTransfer(account);
+    }
+
+    private static void addOwner(Account account) {
+        // Clear the screen and take the users input
+        clear();
+
+        // The instructions to select the type of Transfer
+        String[] instructions = {
+                "Please specify the username(s) of registered user(s) to be",
+                "the new co-owners for account " +
+                        account.getAccountID().substring(0, 7) + "... Type: " + account.getType(),
+                "Enter a blank line to stop"
+        };
+        framePrint(instructions);
+
+        MyLinkedList<User> newOwners = new MyLinkedList<>();
+        while(true) {
+            String input = scan.nextLine();
+            if(input.equals("") ) {
+                break;
+            } else if(!service.usernameIsUnique(input)){
+                boolean skipAdd = false;
+                for(User owner : newOwners) {
+                    if(owner.getUsername().equals(input)) {
+                        System.out.println("You have already specified " + input);
+                        skipAdd = true;
+                        break;
+                    }
+                }
+                for(User owner : account.getOwners()) {
+                    if(owner.getUsername().equals(input)){
+                        System.out.println(input + " already owns this account.");
+                        skipAdd = true;
+                        break;
+                    }
+                }
+                if(skipAdd)
+                    continue;
+                // add the joint owner to the list of owners
+                User jointOwner = new User();
+                jointOwner.setUsername(input);
+                newOwners.add(jointOwner);
+                System.out.println("Co-owner " + input + " has been specified.\n");
+            } else
+                System.out.println("That user is not in our system");
+        }
+
+        // if no one has been specified, leave the menu
+        if(newOwners.isEmpty())
+            return;
+
+        // print out the members specified before confirming
+        System.out.print("You have specified the members:\n");
+        Iterator<User> newOwnersIt = newOwners.iterator();
+        while(newOwnersIt.hasNext()) {
+            System.out.print(newOwnersIt.next().getUsername());
+            if(newOwnersIt.hasNext())
+                System.out.print(", ");
+        }
+
+        // Confirm adding the members
+        boolean isValid = false;
+        String input;
+        do{
+            System.out.print("\nConfirm adding these co-owners? (Y/n): ");
+            input = scan.nextLine();
+            if(input.equalsIgnoreCase("y") || input.equalsIgnoreCase("yes")) {
+                isValid = true;
+            }
+            else if(input.equalsIgnoreCase("n") || input.equalsIgnoreCase("no"))
+            {
+                return;
+            }
+            else
+                System.out.println("That is not a valid option. Please respond with 'Y' or 'N'.");
+        }while(!isValid);
+
+        for(User owner : newOwners) {
+            try{
+                service.makeOwner(account, owner);}
+            catch (ResourceNotFoundException e) {
+                throw new RuntimeException("Something is wrong, an Account doesn't exist that should!", e);
+            }
+        }
+
+    }
+
+    /**
+     * Once a user selects an account to access, the app gives them options on what they can do
+     * @param account - The account being accessed
+     */
+    private static void accessAccount(User user, Account account) {
         while(true) {
             // Clear the screen and take the users input
             clear();
 
             // Instructions for the viewing the menu
             String[] instructions = {
-                    "Here is a list of your accounts",
-                    "Select the one you wish to view"
+                    "Account ID:",
+                    account.getAccountID(),
+                    "What Do you wish to do with your account?" ,
+                    "Enter the number of the option you wish to choose"};
+            String[] options = {
+                    "1) Check Balance                ",
+                    "2) Make a Withdrawal            ",
+                    "3) Make a Deposit               ",
+                    "4) Make a Transfer              ",
+                    "5) Add a Co-Owner               ",
+                    "6) View Transactions            ",
+                    "7) Exit                         "
             };
-            framePrint(instructions);
-
-            MyArrayList<String> centeredBankAccounts = new MyArrayList<>();
-            int longestLength = 0;
-            for (Account account : user.getAccounts()) {
-                String bankAccountOption = (centeredBankAccounts.getCount() + 1) + ". " + account.getAccountID().substring(0, 7) + "... Type: " + account.getType();
-                centeredBankAccounts.add(bankAccountOption);
-                if (longestLength < bankAccountOption.length())
-                    longestLength = bankAccountOption.length();
-            }
-            centeredBankAccounts.add((centeredBankAccounts.getCount() + 1) + ". Exit");
-            String spaces = "                     ";
-            for (String centeredStrings : centeredBankAccounts) {
-                int length = centeredStrings.length();
-                if (length < longestLength)
-                    centeredStrings = centeredStrings + spaces.substring(0, longestLength - length);
-            }
-
-            String[] options = new String[centeredBankAccounts.getCount()];
-            System.arraycopy(centeredBankAccounts.getData(), 0, options, 0, options.length);
-
+            topFramePrint(instructions);
             framePrint(options);
-            short optionSelected = selectOptions((short) options.length);
+
+            short optionSelected = selectOptions((short) 7);
             while (optionSelected == -1) {
                 System.out.println("That is not a valid option, Please select again!");
-                optionSelected = selectOptions((short) options.length);
+                optionSelected = selectOptions((short) 7);
             }
 
-            if (optionSelected == options.length)
-                return;
-
-            //useAccount();
-
+            switch(optionSelected){
+                case 1:
+                    checkBalance(account);
+                    break;
+                case 2:
+                    withdraw(account);
+                    break;
+                case 3:
+                    deposit(account);
+                    break;
+                case 4:
+                    transfer(user, account);
+                    break;
+                case 5:
+                    addOwner(account);
+                    break;
+                case 6:
+                    //viewTransactions(account);
+                    break;
+                case 7:
+                    return;
+            }
         }
+    }
+
+    /**
+     * Once a user has successfully logged in, allows said user to view and access their accounts
+     * @param user - The user that has logged in
+     */
+    private static void viewAccounts(User user) {
+
+        // Clear the screen and take the users input
+        clear();
+
+        // Instructions for the viewing the menu
+        String[] instructions = {
+                "Here is a list of your accounts",
+                "Select the one you wish to access"
+        };
+
+
+        // Set up the options
+        MyArrayList<String> centeredBankAccounts = new MyArrayList<>();
+        int longestLength = 0;
+        for (Account account : user.getAccounts()) {
+            String bankAccountOption = (centeredBankAccounts.getCount() + 1) + ") " +
+                    account.getAccountID().substring(0, 7) + "... Type: " + account.getType();
+            centeredBankAccounts.add(bankAccountOption);
+            if (longestLength < bankAccountOption.length())
+                longestLength = bankAccountOption.length();
+        }
+        centeredBankAccounts.add((centeredBankAccounts.getCount() + 1) + ") Exit");
+        String spaces = "                                         ";
+        for (int i = 0; i < centeredBankAccounts.getCount(); ++i) {
+
+            String centeredString = centeredBankAccounts.get(i);
+            int length = centeredString.length();
+            if (length < longestLength)
+                centeredBankAccounts.replace(i,centeredString + spaces.substring(0, longestLength - length));
+        }
+
+        String[] options = new String[centeredBankAccounts.getCount()];
+        System.arraycopy(centeredBankAccounts.getData(), 0, options, 0, options.length);
+
+
+        //  Print out the instructions and options
+        topFramePrint(instructions);
+        bottomFramePrint(options);
+
+
+        short optionSelected = selectOptions((short) options.length);
+        while (optionSelected == -1) {
+            System.out.println("That is not a valid option, Please select again!");
+            optionSelected = selectOptions((short) options.length);
+        }
+        if (optionSelected == options.length)
+            return;
+
+        accessAccount(user, user.getAccounts().get(--optionSelected));
 
     }
 
@@ -766,11 +1210,15 @@ final class MenuInterface {
                 "7) Exit                         "
         };
         framePrint(instructions);
-        short optionSelected = selectOptions((short)6);
+        short optionSelected = selectOptions((short)7);
         while(optionSelected == -1) {
             System.out.println("That is not a valid option, Please select again!");
-            optionSelected = selectOptions((short)6);
+            optionSelected = selectOptions((short)7);
         }
+
+        if(optionSelected == 7)
+            return;
+
         Account newAccount = new Account();
         newAccount.setBalance(new BigDecimal(0));
 
@@ -782,6 +1230,13 @@ final class MenuInterface {
 
         if(confirmAccount(newAccount)) {
             service.addAccount(newAccount);
+            for(User owner : newAccount.getOwners()) {
+                try{
+                service.makeOwner(newAccount, owner);}
+                catch (ResourceNotFoundException e) {
+                    throw new RuntimeException("Something is wrong, an Account doesn't exist that should!", e);
+                }
+            }
             user.getAccounts().add(newAccount);
 
             String[] confirmationMessage = {
@@ -855,28 +1310,28 @@ final class MenuInterface {
             // if a console is attached, make the password secure
             if (System.console() != null) {
                 char[] charPass = System.console().readPassword("Password: ");
-                password = getMessageDigest(new String(charPass));
+                password = hash.getMessageDigest(new String(charPass));
             } else {
                 System.out.print("Password: ");
-                password = getMessageDigest(scan.nextLine());
+                password = hash.getMessageDigest(scan.nextLine());
             }
 
             user = service.logUserIn(username, password);
             if(user != null)
                 break;
+            System.out.println("Either The Username Or The Password Is Incorrect. Try again.\n");
         }
 
         if(user == null)
-        {
             System.out.println("You have exceeded the log-in attempts for this session, please try again later.");
-        }
-        userMenu(user);
+        else
+            userMenu(user);
     }
 
     /**
      * Main menu of the Application
      */
-    static void mainMenu(){
+    public static void mainMenu(){
         // Clear the screen and take the users input
         clear();
 
