@@ -23,6 +23,7 @@ public final class BankingApp {
         BankService service = BankServiceImplementation.getInstance();
         while (running) {
 
+            clear();
             if(service.isConnected()) {
                 // The message greeting the user to the application
                 String[] welcomeMessage = {

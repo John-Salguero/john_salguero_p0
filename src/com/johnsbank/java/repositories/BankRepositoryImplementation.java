@@ -555,6 +555,7 @@ public class BankRepositoryImplementation implements BankRepository{
     public MyLinkedList<Transaction> getAllTransactions(User user) {
 
         String query = "SELECT * FROM \"Transactions\" WHERE \"From_Account\" IN " +
+                "(SELECT \"Account_ID\" FROM \"User_Accounts\" WHERE \"Username\" =?) OR \"To_Account\" IN " +
                 "(SELECT \"Account_ID\" FROM \"User_Accounts\" WHERE \"Username\" =?);";
         MyLinkedList<Transaction> transactions = new MyLinkedList<>();
 
@@ -562,12 +563,13 @@ public class BankRepositoryImplementation implements BankRepository{
             // Set up PreparedStatement
             PreparedStatement ps = connection.prepareStatement(query);
             ps.setString(1, user.getUsername());
+            ps.setString(2, user.getUsername());
             // Execute the statement
             ResultSet rs = ps.executeQuery();
 
             while(rs.next()){
                 transactions.insertOrdered(buildTransaction(rs),
-                        (Transaction a, Transaction b) -> a.getDate().getTime() < b.getDate().getTime());
+                        (Transaction a, Transaction b) -> a.getDate().getTime() > b.getDate().getTime());
             }
 
         } catch (SQLException e)
@@ -586,19 +588,21 @@ public class BankRepositoryImplementation implements BankRepository{
     @Override
     public MyLinkedList<Transaction> getAllTransactions(Account account) {
 
-        String query = "SELECT * FROM \"Transactions\" WHERE \"From_Account\"=?;";
+        String query = "SELECT * FROM \"Transactions\" WHERE \"From_Account\"=? OR " +
+                "\"To_Account\"=?;";
         MyLinkedList<Transaction> transactions = new MyLinkedList<>();
 
         try {
             // Set up PreparedStatement
             PreparedStatement ps = connection.prepareStatement(query);
             ps.setString(1, account.getAccountID());
+            ps.setString(2, account.getAccountID());
             // Execute the statement
             ResultSet rs = ps.executeQuery();
 
             while(rs.next()){
                 transactions.insertOrdered(buildTransaction(rs),
-                        (Transaction a, Transaction b) -> a.getDate().getTime() < b.getDate().getTime());
+                        (Transaction a, Transaction b) -> a.getDate().getTime() > b.getDate().getTime());
             }
 
         } catch (SQLException e)

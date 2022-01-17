@@ -11,7 +11,7 @@ public final class ScreenPrinter {
     /**
      * Clears the screen
      */
-    static void clear() {
+    public static void clear() {
 
         // Spam the backspace key to clear the console
         for(int i = 0; i < 1000; i++)
@@ -36,7 +36,7 @@ public final class ScreenPrinter {
      * it prints out a number of framed filler lines
      * @param count the number of framed filler lines
      */
-    private static void printFramedFiller(short count){
+    public static void printFramedFiller(short count){
 
         for(int i = 0; i < count; ++i) {
             System.out.print('|');

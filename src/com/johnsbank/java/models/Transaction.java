@@ -4,6 +4,9 @@ import com.johnsbank.java.utilities.HashGenerator;
 
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Locale;
 
 public class Transaction {
     private String transactionID;
@@ -65,6 +68,52 @@ public class Transaction {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder retVal = new StringBuilder(); // The Transaction that can be printed to screen
+        char[] repeat = new char[64];               // an array of spaces used for padding
+        Arrays.fill(repeat, ' ');
+        String spaces = new String(repeat);         // String of spaces used for padding
+        int countLines = 0;
+
+        retVal.append("|****  Date: ");
+        retVal.append(date.toString());
+        retVal.append("                                  Type: ");
+
+        if(to == null)
+            retVal.append("Withdrawal");
+        else if(from == null)
+            retVal.append("Deposit");
+        else
+            retVal.append("Transfer");
+        retVal.append(spaces.substring(0, 75-retVal.length()));
+        retVal.append("****|\n|****  Amount: ");
+        retVal.append(NumberFormat.getCurrencyInstance(Locale.US).format(amount));
+        retVal.append(spaces.substring(0, 75-(retVal.length()-81*++countLines)));
+        retVal.append("****|\n");
+        if(from != null){
+            retVal.append("|****  From Account:");
+            retVal.append(spaces.substring(0, 75-(retVal.length()-81*++countLines)));
+            retVal.append("****|\n|****  ");
+            retVal.append(from);
+            retVal.append(spaces.substring(0, 75-(retVal.length()-81*++countLines)));
+            retVal.append("****|\n");
+
+        }
+        if(to != null){
+            retVal.append("|****  To Account:");
+            retVal.append(spaces.substring(0, 75-(retVal.length()-81*++countLines)));
+            retVal.append("****|\n|****  ");
+            retVal.append(to);
+            retVal.append(spaces.substring(0, 75-(retVal.length()-81*++countLines)));
+            retVal.append("****|\n");
+        }
+
+        retVal.append("|==============================================================================|");
+
+        return retVal.toString();
     }
 
 }

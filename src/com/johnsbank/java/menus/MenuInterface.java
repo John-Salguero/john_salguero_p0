@@ -1079,6 +1079,60 @@ public final class MenuInterface {
     }
 
     /**
+     * Given an Account show the Transactions to the user
+     * @param account - The account used to print the Transactions
+     */
+    private static void viewTransactions(Account account) {
+
+        boolean listEnd = false;
+        int count = 0;
+        MyLinkedList<Transaction> transactions = service.getAllTransactions(account);
+        Iterator<Transaction> it =  transactions.iterator();
+
+        while(it.hasNext()) {
+            // Clear the screen and take the users input
+            clear();
+
+            // Instructions for the viewing the menu
+            String[] topInstructions = {
+                    "Account ID:",
+                    account.getAccountID(),
+                    "Showing Recent Transactions Page: " + ++count,
+            };
+            // Instructions for the viewing the menu
+            String[] bottomInstructions = {
+                    "Press Enter to view next page",
+                    "Input \"Exit\" to leave Transaction Menu"
+            };
+
+            // Print the top of the screen
+            topFramePrint(topInstructions);
+            // Print out the Transactions
+            for(int i = 0; i < 4 && it.hasNext(); ++i)
+            {
+                System.out.println(it.next().toString());
+            }
+            // Print the bottom of the screen
+            bottomFramePrint(bottomInstructions);
+
+            if(scan.nextLine().equalsIgnoreCase("exit"))
+                return;
+        }
+
+        // Instructions for the viewing the menu
+        String[] instructions = {
+                "Account ID:",
+                account.getAccountID(),
+                "There are no more Transactions to show",
+                "Press Enter to exit the menu"
+        };
+        // Print the top of the screen
+        topFramePrint(instructions);
+
+        scan.nextLine();
+    }
+
+    /**
      * Once a user selects an account to access, the app gives them options on what they can do
      * @param account - The account being accessed
      */
@@ -1128,7 +1182,7 @@ public final class MenuInterface {
                     addOwner(account);
                     break;
                 case 6:
-                    //viewTransactions(account);
+                    viewTransactions(account);
                     break;
                 case 7:
                     return;
@@ -1249,6 +1303,59 @@ public final class MenuInterface {
 
     }
 
+    /**
+     * Given an Account show the Transactions to the user
+     * @param user - The account used to print the Transactions
+     */
+    private static void viewTransactions(User user) {
+
+        boolean listEnd = false;
+        int count = 0;
+        MyLinkedList<Transaction> transactions = service.getAllTransactions(user);
+        Iterator<Transaction> it =  transactions.iterator();
+
+        while(it.hasNext()) {
+            // Clear the screen and take the users input
+            clear();
+
+            // Instructions for the viewing the menu
+            String[] topInstructions = {
+                    "Username:",
+                    user.getUsername(),
+                    "Showing Recent Transactions Page: " + ++count,
+            };
+            // Instructions for the viewing the menu
+            String[] bottomInstructions = {
+                    "Press Enter to view next page",
+                    "Input \"Exit\" to leave Transaction Menu"
+            };
+
+            // Print the top of the screen
+            topFramePrint(topInstructions);
+            // Print out the Transactions
+            for(int i = 0; i < 3 && it.hasNext(); ++i)
+            {
+                System.out.println(it.next().toString());
+            }
+            // Print the bottom of the screen
+            bottomFramePrint(bottomInstructions);
+
+            if(scan.nextLine().equalsIgnoreCase("exit"))
+                return;
+        }
+
+        // Instructions for the viewing the menu
+        String[] instructions = {
+                "Account ID:",
+                user.getUsername(),
+                "There are no more Transactions to show",
+                "Press Enter to exit the menu"
+        };
+        // Print the top of the screen
+        topFramePrint(instructions);
+
+        scan.nextLine();
+    }
 
     static void userMenu(User user) {
         while(true) {
@@ -1278,7 +1385,7 @@ public final class MenuInterface {
                     openAccount(user);
                     break;
                 case 3:
-                    //viewTransactions(user);
+                    viewTransactions(user);
                     break;
                 default:
                     return;
