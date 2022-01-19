@@ -17,7 +17,7 @@ public class BankServiceImplementation implements BankService{
     private static final BankServiceImplementation instance = new BankServiceImplementation();
     private final BankRepository repository;
 
-    private BankServiceImplementation() {repository = BankRepositoryImplementation.getInstance();}
+    public BankServiceImplementation() {repository = BankRepositoryImplementation.getInstance();}
     public static BankServiceImplementation getInstance() {return instance;}
 
     /**
@@ -267,7 +267,7 @@ public class BankServiceImplementation implements BankService{
 
     /**
      * Retrieves all the transactions in the database
-     * @return
+     * @return An Array list holding all the transactions in the database
      */
     @Override
     public MyArrayList<Transaction> getAllTransactions() {

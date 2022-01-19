@@ -4,7 +4,7 @@ import com.johnsbank.java.services.BankService;                              // 
 import com.johnsbank.java.services.BankServiceImplementation;                // Instance of the Banking Service
 import java.util.Scanner;                                                    // The scanner for input
 import static com.johnsbank.java.menus.ScreenPrinter.*;                      // All the functions to print to the screen
-import static com.johnsbank.java.menus.MenuInterface.*;                      // Controls the menu selection
+import static com.johnsbank.java.menus.MenuImplementation.*;                 // Controls the menu selection
 
 public final class BankingApp {
 

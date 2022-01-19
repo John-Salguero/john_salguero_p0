@@ -142,7 +142,7 @@ public class MyArrayList<T> implements Iterable<T> {
         }
 
         public void remove() {
-            MyArrayList.this.remove(index);
+            MyArrayList.this.remove(--index);
         }
     }
 

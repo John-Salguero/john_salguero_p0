@@ -127,30 +127,38 @@ public class MyLinkedList<T> implements Iterable<T> {
 
     class MyIterator implements Iterator<T> {
 
-        private Node<T> node;
+        private Node<T> nextNode;
+        private Node<T> curNode;
         private Node<T> prevNode;
 
         MyIterator(){
-            node = MyLinkedList.this.head;
+            nextNode = MyLinkedList.this.head;
         }
 
         public boolean hasNext() {
-            return node != null;
+            return nextNode != null;
         }
 
         public T next() {
-            T retVal = node.data;
-            prevNode = node;
-            node = node.next;
+            T retVal = nextNode.data;
+            prevNode = curNode;
+            curNode = nextNode;
+            nextNode = nextNode.next;
             return retVal;
         }
 
         public void remove() {
-            if(node == MyLinkedList.this.head)
-                MyLinkedList.this.head = node.next;
-            else
-                prevNode.next = node.next;
-            node = node.next;
+            if(nextNode == MyLinkedList.this.head) {
+                throw new IllegalStateException();
+            }
+            else if(curNode == MyLinkedList.this.head){
+                MyLinkedList.this.head = nextNode;
+            } else if(curNode != null)
+                prevNode.next = curNode.next;
+
+            curNode = nextNode;
+            if(nextNode!= null)
+                nextNode = nextNode.next;
         }
     }
 }
