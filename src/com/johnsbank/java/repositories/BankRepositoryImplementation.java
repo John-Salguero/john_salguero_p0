@@ -422,7 +422,7 @@ public class BankRepositoryImplementation implements BankRepository{
                 return buildTransaction(rs);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Could not add an Transaction to the Database!", e);
+            throw new RuntimeException("Could not add a Transaction to the Database!", e);
         }
 
         return null;

@@ -28,11 +28,13 @@ public class HashGenerator {
 
     /**
      * The method that securely Hashes User's confidential information
+     * @param msg - The string that will be hashed
+     * @return A String holding the Hash of the message passed in
      */
-    public String getMessageDigest(String pass){
+    public String getMessageDigest(String msg){
 
         // Hash the message to securely save and compare
-        byte[] hash = SHA256Alg.digest(pass.getBytes(StandardCharsets.UTF_8));
+        byte[] hash = SHA256Alg.digest(msg.getBytes(StandardCharsets.UTF_8));
         return bytesToHex(hash);
     }
 

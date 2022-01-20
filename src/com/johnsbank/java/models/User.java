@@ -5,20 +5,20 @@ import com.johnsbank.java.utilities.MyLinkedList;
 
 public class User {
 
-    public User() {};
-
-    public User(String username, String firstName, String lastName, MyArrayList<Account> accounts, MyLinkedList<Transaction> transactions) {
-        this.username = username;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.accounts = accounts;
-        this.transactions = transactions;
-    }
-
     private String username;
     private String firstName;
     private String lastName;
     private String phoneNumber;
+    private String email;
+    private String addressLine1;
+    private String addressLine2;
+    private String state;
+    private String zipCode;
+    private String SSN_Hash;
+    private String pass_Hash;
+
+    private MyArrayList<Account> accounts;
+    private MyLinkedList<Transaction> transactions;
 
     public String getUsername() {
         return username;
@@ -124,14 +124,4 @@ public class User {
         this.transactions = transactions;
     }
 
-    private String email;
-    private String addressLine1;
-    private String addressLine2;
-    private String state;
-    private String zipCode;
-    private String SSN_Hash;
-    private String pass_Hash;
-
-    private MyArrayList<Account> accounts;
-    private MyLinkedList<Transaction> transactions;
 }

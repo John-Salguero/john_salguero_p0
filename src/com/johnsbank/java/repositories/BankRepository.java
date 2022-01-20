@@ -15,7 +15,7 @@ public interface BankRepository {
     public User updateUser(User change) throws ResourceNotFoundException;
     public User deleteUser(String username) throws ResourceNotFoundException;
     public MyArrayList<User> getAllUsers();
-    public MyArrayList<User> getAllOwners(Account account);
+    public MyArrayList<User> getAllOwners(Account account) throws ResourceNotFoundException;
 
     // CRUD Operations on Accounts
     public Account addAccount(Account newAccount);
@@ -23,7 +23,7 @@ public interface BankRepository {
     public Account updateAccount(Account change) throws ResourceNotFoundException;
     public Account deleteAccount(String accountId) throws ResourceNotFoundException;
     public MyArrayList<Account> getAllAccounts();
-    public MyArrayList<Account> getAllAccounts(User user);
+    public MyArrayList<Account> getAllAccounts(User user) throws ResourceNotFoundException;
 
     // CRUD operations on Transactions
     public Transaction addTransaction(Transaction newTransaction);
@@ -31,8 +31,8 @@ public interface BankRepository {
     public Transaction updateTransaction(Transaction change) throws ResourceNotFoundException;
     public Transaction deleteTransaction(String transactionId) throws ResourceNotFoundException;
     public MyArrayList<Transaction> getAllTransactions();
-    public MyLinkedList<Transaction> getAllTransactions(User user);
-    public MyLinkedList<Transaction> getAllTransactions(Account account);
+    public MyLinkedList<Transaction> getAllTransactions(User user) throws ResourceNotFoundException;
+    public MyLinkedList<Transaction> getAllTransactions(Account account) throws ResourceNotFoundException;
 
     // CRUD operations on User Accounts
     public boolean addUserAccount(String username, String accountId);

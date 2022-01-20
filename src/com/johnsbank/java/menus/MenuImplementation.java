@@ -274,7 +274,13 @@ public final class MenuImplementation {
     private static void viewTransactions(User user) {
 
         int count = 0;
-        MyLinkedList<Transaction> transactions = service.getAllTransactions(user);
+        MyLinkedList<Transaction> transactions;
+        try {
+            transactions = service.getAllTransactions(user);
+        }catch (ResourceNotFoundException e)
+        {
+            throw new RuntimeException("Logged in user doesn't exist!", e);
+        }
         Iterator<Transaction> it =  transactions.iterator();
 
         while(it.hasNext()) {
@@ -662,7 +668,12 @@ public final class MenuImplementation {
     private static void viewTransactions(Account account) {
 
         int count = 0;
-        MyLinkedList<Transaction> transactions = service.getAllTransactions(account);
+        MyLinkedList<Transaction> transactions;
+        try {
+            transactions = service.getAllTransactions(account);
+        } catch (ResourceNotFoundException e) {
+            throw new RuntimeException("Logged in Account does not Exist!", e);
+        }
         Iterator<Transaction> it =  transactions.iterator();
 
         while(it.hasNext()) {
@@ -1551,6 +1562,9 @@ public final class MenuImplementation {
          * @return - Returns true if the username is in the correct format, false otherwise
          */
         public boolean validate( String username) {
+
+            if(username.length() > 25)
+                return false;
 
             String usernameLower = username.toLowerCase(Locale.US);
             for(int i = 0; i < username.length(); ++i)

@@ -2,6 +2,9 @@ package com.johnsbank.java.app;
 
 import com.johnsbank.java.services.BankService;                              // Interface to the banking service
 import com.johnsbank.java.services.BankServiceImplementation;                // Instance of the Banking Service
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Scanner;                                                    // The scanner for input
 import static com.johnsbank.java.menus.ScreenPrinter.*;                      // All the functions to print to the screen
 import static com.johnsbank.java.menus.MenuImplementation.*;                 // Controls the menu selection
@@ -18,7 +21,7 @@ public final class BankingApp {
      * @param args The command line arguments
      */
     public static void main(String[] args) {
-
+        
         // Instantiates the instance to the banking service
         BankService service = BankServiceImplementation.getInstance();
         while (running) {

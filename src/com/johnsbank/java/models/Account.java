@@ -18,7 +18,6 @@ public class Account {
     private BigDecimal balance;
     private boolean active;
 
-
     public String getAccountID() {
         return accountID;
     }

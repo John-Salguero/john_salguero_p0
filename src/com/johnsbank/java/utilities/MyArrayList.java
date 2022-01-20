@@ -11,10 +11,20 @@ public class MyArrayList<T> implements Iterable<T> {
     private int size = 10;
     private Object[] array = new Object[size];
 
+    /**
+     * I implemented this before I knew about the Java comparators in the given libraries, acts as a comparator
+     * @param <T> - The element that will be compared in the operation
+     */
+    @FunctionalInterface
     public interface Compare<T> {
         boolean operation(T a, T b);
     }
 
+    /**
+     * Using the comparator I implemented, inserts an element in a sorted manner
+     * @param data - The data being inserted
+     * @param comparator - the comparator used to keep it sorted
+     */
     public void insertOrdered(T data, MyArrayList.Compare<T> comparator) {
 
         for(int i = 0; i < count; ++i)
@@ -27,10 +37,18 @@ public class MyArrayList<T> implements Iterable<T> {
         add(data);
     }
 
+    /**
+     * Gets the element at an index
+     * @param index - the index to get the object
+     * @return - The object at the given index
+     */
     public T get(int index) {
         return (T)array[index];
     }
 
+    /**
+     * Grows the internal array
+     */
     private void grow(){
         Object[] array = new Object[size*2];
 
@@ -40,6 +58,10 @@ public class MyArrayList<T> implements Iterable<T> {
         this.array = array;
     }
 
+    /**
+     * Removes the element at the given index
+     * @param index - The index to remove
+     */
     public void remove(int index) {
         if(index >= count || index < 0)
             return;
@@ -50,34 +72,51 @@ public class MyArrayList<T> implements Iterable<T> {
     }
 
     /**
-     * Adds the given String into the array
-     * @param str - the value you want to add into the array
+     * Adds the given element into the array
+     * @param element - the value you want to add into the array
      * @return - the index that it was added at
      */
-    public int add(T str) {
+    public int add(T element) {
         if (count == size)
         {
             grow();
         }
-        array[count++] = str;
+        array[count++] = element;
 
         return count - 1;
     }
 
+    /**
+     * Returns the count of elements
+     * @return - how many elements in the container
+     */
     public int size() {
         return count;
     }
 
+    /**
+     * returns true if not holding any elements
+     * @return - if the array is empty, returns true
+     */
     public boolean isEmpty() {
         return count == 0;
     }
 
+    /**
+     * Returnd the last element in the array
+     * @return - the last element in the array
+     */
     public T end(){
         if(count < 1)
             return null;
         return (T)array[count-1];
     }
 
+    /**
+     * replaces an element in the array
+     * @param index - the index to replace the element with
+     * @param data - the data replacing the element
+     */
     public void replace(int index, T data){
         if(index >= count || index < 0)
             return;
@@ -85,31 +124,47 @@ public class MyArrayList<T> implements Iterable<T> {
         array[index] = data;
     }
 
+    /**
+     * returns the count of elements
+     * @return - the count of elements
+     */
     public int getCount() {
         return count;
     }
 
-    public void insert(int index, T str){
+    /**
+     * given an index and data, inserts that data at the index
+     * @param index - the index to put the new element
+     * @param element - the element to place in the index
+     */
+    public void insert(int index, T element){
         if(index < 0)
             index = 0;
 
         if(index >= count)
-            add(str);
+            add(element);
         else{
             if(count == size)
                 grow();
             System.arraycopy(array, index, array, index + 1, count - index);
-            array[index] = str;
+            array[index] = element;
             ++count;
         }
 
     }
 
+    /**
+     * returns the array to undergo low level operations
+     * @return - The internal array of the container
+     */
     public T[] getData(){
         return (T[]) array;
     }
 
-
+    /**
+     * returns all the elements inside a String
+     * @return - the string containing all the elements
+     */
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder("[");
@@ -125,10 +180,17 @@ public class MyArrayList<T> implements Iterable<T> {
         return out.toString();
     }
 
+    /**
+     * returns an iterator to be used for the container
+     * @return The iterator used for the container
+     */
     public Iterator<T> iterator() {
         return new MyIterator();
     }
 
+    /**
+     * Iterator class used for MyArrayList
+     */
     class MyIterator implements Iterator<T> {
 
         private int index = 0;

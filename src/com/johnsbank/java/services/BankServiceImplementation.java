@@ -17,21 +17,54 @@ public class BankServiceImplementation implements BankService{
     private static final BankServiceImplementation instance = new BankServiceImplementation();
     private final BankRepository repository;
 
-    public BankServiceImplementation() {repository = BankRepositoryImplementation.getInstance();}
+    private BankServiceImplementation() {repository = BankRepositoryImplementation.getInstance();}
     public static BankServiceImplementation getInstance() {return instance;}
 
     /**
      * Checks to make sure the username is Unique, if true adds the user, if false returns null
+     * Also checks the inputs are in valid format for the Database
      * @param newUser - the user to add
      * @return - The User that was added
      */
     @Override
     public User addUser(User newUser) {
 
-        if(usernameIsUnique(newUser.getUsername()))
-            return repository.addUser(newUser);
+        if(newUser == null)
+            return null;
+        // Check to make sure the input is all in the correct format
+        if(newUser.getFirstName() == null ||  newUser.getFirstName().length() > 20)
+            return null;
+        if(newUser.getLastName() == null || newUser.getLastName().length() > 25)
+            return null;
+        if(newUser.getPhoneNumber() == null ||
+                !newUser.getPhoneNumber().matches("[(][0-9]{3}[)][ ][0-9]{3}[-][0-9]{4}"))
+            return null;
+        if(newUser.getZipCode() == null ||
+                !newUser.getZipCode().matches("[0-9]{5}([-][0-9]{4})?"))
+            return null;
+        if(newUser.getAddressLine1() == null ||
+                newUser.getAddressLine1().length() < 3 || newUser.getAddressLine1().length() > 100)
+            return null;
+        if(newUser.getAddressLine2() == null || newUser.getAddressLine2().length() > 100)
+            return null;
+        if(newUser.getState() == null ||
+                !newUser.getState().matches("[A-Z]{2}"))
+            return null;
+        if(newUser.getEmail() == null || !newUser.getEmail().
+                matches("([a-zA-Z0-9]{1,}[._\\-]{0,1}){1,}[a-zA-Z0-9][@][a-zA-Z0-9\\-]{1,}[.][a-zA-Z0-9\\-]{2,}"))
+            return null;
+        if(newUser.getUsername() == null || !newUser.getUsername().matches("[a-zA-Z0-9._\\-]{1,25}"))
+            return null;
+        if(newUser.getSSN_Hash() == null || !newUser.getSSN_Hash().matches("[a-f0-9]{64}"))
+            return null;
+        if(newUser.getPass_Hash() == null || !newUser.getPass_Hash().matches("[a-f0-9]{64}"))
+            return null;
 
-        return null;
+        // Checks to make sure the user is unique
+        if(!usernameIsUnique(newUser.getUsername()))
+            return null;
+
+        return repository.addUser(newUser);
     }
 
     /**
@@ -42,6 +75,9 @@ public class BankServiceImplementation implements BankService{
      */
     @Override
     public User getUser(String username) throws ResourceNotFoundException {
+
+        if(username == null || username.length() > 25)
+            throw new ResourceNotFoundException("Malformed Username");
 
         User retVal = repository.getUser(username);
         retVal.setAccounts(getAllAccounts(retVal));
@@ -58,6 +94,37 @@ public class BankServiceImplementation implements BankService{
      */
     @Override
     public User updateUser(User change) throws ResourceNotFoundException {
+        if(change == null)
+            return null;
+        // Check to make sure the input is all in the correct format
+        if(change.getFirstName() == null ||  change.getFirstName().length() > 20)
+            return null;
+        if(change.getLastName() == null || change.getLastName().length() > 25)
+            return null;
+        if(change.getPhoneNumber() == null ||
+                !change.getPhoneNumber().matches("[(][0-9]{3}[)][ ][0-9]{3}[-][0-9]{4}"))
+            return null;
+        if(change.getZipCode() == null ||
+                !change.getZipCode().matches("[0-9]{5}([-][0-9]{4})?"))
+            return null;
+        if(change.getAddressLine1() == null ||
+                change.getAddressLine1().length() < 3 || change.getAddressLine1().length() > 100)
+            return null;
+        if(change.getAddressLine2() == null || change.getAddressLine2().length() > 100)
+            return null;
+        if(change.getState() == null ||
+                !change.getState().matches("[A-Z]{2}"))
+            return null;
+        if(change.getEmail() == null || !change.getEmail().
+                matches("([a-zA-Z0-9]{1,}[._\\-]{0,1}){1,}[a-zA-Z0-9][@][a-zA-Z0-9\\-]{1,}[.][a-zA-Z0-9\\-]{2,}"))
+            return null;
+        if(change.getUsername() == null || !change.getUsername().matches("[a-zA-Z0-9._\\-]{1,25}"))
+            return null;
+        if(change.getSSN_Hash() == null || !change.getSSN_Hash().matches("[a-f0-9]{64}"))
+            return null;
+        if(change.getPass_Hash() == null || !change.getPass_Hash().matches("[a-f0-9]{64}"))
+            return null;
+
         return repository.updateUser(change);
     }
 
@@ -70,6 +137,9 @@ public class BankServiceImplementation implements BankService{
      */
     @Override
     public User deleteUser(String username) throws ResourceNotFoundException {
+        if(username == null || username.length() > 25)
+            throw new ResourceNotFoundException("Malformed Username");
+
         return repository.deleteUser(username);
     }
 
@@ -82,8 +152,12 @@ public class BankServiceImplementation implements BankService{
 
         MyArrayList<User> retVal = repository.getAllUsers();
         for(User user : retVal){
-            user.setAccounts(getAllAccounts(user));
-            user.setTransactions(getAllTransactions(user));
+            try {
+                user.setAccounts(getAllAccounts(user));
+                user.setTransactions(getAllTransactions(user));
+            } catch (ResourceNotFoundException e) {
+                throw new RuntimeException("Accounts don't exist that should!", e);
+            }
         }
 
         return retVal;
@@ -95,7 +169,10 @@ public class BankServiceImplementation implements BankService{
      * @return - A custom Array List of all the users who own the account given
      */
     @Override
-    public MyArrayList<User> getAllOwners(Account account) {
+    public MyArrayList<User> getAllOwners(Account account) throws ResourceNotFoundException {
+
+        if(account == null || account.getAccountID() == null || account.getAccountID().length() != 64)
+            throw new ResourceNotFoundException("Malformed account");
 
         MyArrayList<User> retVal = repository.getAllOwners(account);
         for(User user : retVal) {
@@ -113,6 +190,17 @@ public class BankServiceImplementation implements BankService{
      */
     @Override
     public Account addAccount(Account newAccount) {
+
+        // Make sure the account is valid
+        if(newAccount == null)
+            return null;
+        if(newAccount.getAccountID() == null || !newAccount.getAccountID().matches("[a-f0-9]{64}"))
+            return null;
+        if(newAccount.getBalance() == null || newAccount.getBalance().compareTo(BigDecimal.ZERO) < 0)
+            return null;
+        if(newAccount.getType() == null)
+            return null;
+
         return repository.addAccount(newAccount);
     }
 
@@ -124,6 +212,10 @@ public class BankServiceImplementation implements BankService{
      */
     @Override
     public Account getAccount(String accountId) throws ResourceNotFoundException {
+
+        // Make sure the account is valid
+        if(accountId == null || !accountId.matches("[a-f0-9]{64}"))
+            throw new ResourceNotFoundException("Malformed Account id");
 
         Account account = repository.getAccount(accountId);
         account.setTransactions(repository.getAllTransactions(account));
@@ -140,6 +232,17 @@ public class BankServiceImplementation implements BankService{
      */
     @Override
     public Account updateAccount(Account change) throws ResourceNotFoundException {
+
+        // Make sure the account is valid
+        if(change == null)
+            return null;
+        if(change.getAccountID() == null || !change.getAccountID().matches("[a-f0-9]{64}"))
+            return null;
+        if(change.getBalance() == null || change.getBalance().compareTo(BigDecimal.ZERO) < 0)
+            return null;
+        if(change.getType() == null)
+            return null;
+
         return repository.updateAccount(change);
     }
 
@@ -163,8 +266,13 @@ public class BankServiceImplementation implements BankService{
 
         MyArrayList<Account> retVal = repository.getAllAccounts();
         for(Account account: retVal) {
-            account.setOwners(getAllOwners(account));
-            account.setTransactions(getAllTransactions(account));
+            try {
+                account.setOwners(getAllOwners(account));
+                account.setTransactions(getAllTransactions(account));
+            }
+            catch (ResourceNotFoundException e) {
+                throw new RuntimeException("Accounts don't exist that should!", e);
+            }
         }
         return retVal;
     }
@@ -175,7 +283,10 @@ public class BankServiceImplementation implements BankService{
      * @return
      */
     @Override
-    public MyArrayList<Account> getAllAccounts(User user) {
+    public MyArrayList<Account> getAllAccounts(User user) throws ResourceNotFoundException {
+
+        if(user == null)
+            throw new ResourceNotFoundException("Malformed user");
 
         MyArrayList<Account> retVal = repository.getAllAccounts(user);
         for(Account account: retVal) {
@@ -195,6 +306,9 @@ public class BankServiceImplementation implements BankService{
     @Override
     public boolean sendTransaction(Transaction newTransaction) {
 
+        if(newTransaction == null)
+            return false;
+
         // get the Account the funds are going to
         Account to;
         try {
@@ -210,7 +324,8 @@ public class BankServiceImplementation implements BankService{
             // get the account making the transaction - if it throws an exception, the bank doesn't control it
             from = getAccount(newTransaction.getFrom());
             // test to see if the funds exist And the account does not have a hold
-            if(from.isActive() && from.getBalance().compareTo(newTransaction.getAmount()) > -1) {
+            if(from.isActive() && from.getBalance().compareTo(newTransaction.getAmount()) > -1 &&
+                    newTransaction.getAmount().compareTo(new BigDecimal(0)) > 0 ) {
                 // update the funds from the account making the transaction
                 from.setBalance(from.getBalance().subtract(newTransaction.getAmount()));
                 if (to != null) // if the bank controls the to account, update the funds
@@ -243,27 +358,31 @@ public class BankServiceImplementation implements BankService{
         return repository.getTransaction(transactionId);
     }
 
-    /**
-     * Given a set of changes for a transaction, alters the data in the database
-     * @param change - The set of changes in a transaction object
-     * @return - The transaction changed
-     * @throws ResourceNotFoundException
-     */
-    @Override
-    public Transaction updateTransaction(Transaction change) throws ResourceNotFoundException {
-        return repository.updateTransaction(change);
-    }
-
-    /**
-     * Given transaction id, deletes the associated transaction
-     * @param transactionId - The transaction id of the transaction to delete
-     * @return - the transaction deleted
-     * @throws ResourceNotFoundException
-     */
-    @Override
-    public Transaction deleteTransaction(String transactionId) throws ResourceNotFoundException {
-        return repository.deleteTransaction(transactionId);
-    }
+//    /**
+//     * Given a set of changes for a transaction, alters the data in the database
+//     * @param change - The set of changes in a transaction object
+//     * @return - The transaction changed
+//     * @throws ResourceNotFoundException
+//     */
+//    @Override
+//    public Transaction updateTransaction(Transaction change) throws ResourceNotFoundException {
+//
+//        if(change == null)
+//            throw new ResourceNotFoundException("malformed transaction");
+//
+//        return repository.updateTransaction(change);
+//    }
+//
+//    /**
+//     * Given transaction id, deletes the associated transaction
+//     * @param transactionId - The transaction id of the transaction to delete
+//     * @return - the transaction deleted
+//     * @throws ResourceNotFoundException
+//     */
+//    @Override
+//    public Transaction deleteTransaction(String transactionId) throws ResourceNotFoundException {
+//        return repository.deleteTransaction(transactionId);
+//    }
 
     /**
      * Retrieves all the transactions in the database
@@ -280,7 +399,12 @@ public class BankServiceImplementation implements BankService{
      * @return - An ordered linked list of all the transactions
      */
     @Override
-    public MyLinkedList<Transaction> getAllTransactions(User user) {
+    public MyLinkedList<Transaction> getAllTransactions(User user) throws ResourceNotFoundException {
+
+        // Make sure the username is valid
+        if(user == null || !user.getUsername().matches("[a-zA-Z0-9._\\-]{1,25}"))
+            throw new ResourceNotFoundException("Malformed user object");
+
         return repository.getAllTransactions(user);
     }
 
@@ -290,7 +414,12 @@ public class BankServiceImplementation implements BankService{
      * @return - an ordered linked list of all the transactions
      */
     @Override
-    public MyLinkedList<Transaction> getAllTransactions(Account account) {
+    public MyLinkedList<Transaction> getAllTransactions(Account account) throws ResourceNotFoundException {
+
+        // Make sure the account is valid
+        if(account == null || account.getAccountID() == null || !account.getAccountID().matches("[a-f0-9]{64}"))
+            throw new ResourceNotFoundException("Malformed Account id");
+
         return repository.getAllTransactions(account);
     }
 
@@ -361,6 +490,10 @@ public class BankServiceImplementation implements BankService{
     @Override
     public boolean usernameIsUnique(String username) {
 
+        // Make sure the username is valid
+        if(username == null || !username.matches("[a-zA-Z0-9._\\-]{1,25}"))
+            return false;
+
         try {
             repository.getUser(username);
         } catch (ResourceNotFoundException e) {
@@ -401,6 +534,7 @@ public class BankServiceImplementation implements BankService{
     public boolean makeWithdrawal(Account account, BigDecimal amount) {
 
         try {
+            // make sure the user is valid
             account = getAccount(account.getAccountID());
             if(account.getBalance().compareTo(amount) > -1) { // if there are enough funds
                 account.setBalance(account.getBalance().subtract(amount));

@@ -35,5 +35,5 @@ CREATE TABLE IF NOT EXISTS "Transactions" (
   "Date_Made" Date,
   "Amount" NUMERIC(20, 2) NOT NULL,
   "From_Account" CHAR(64) REFERENCES "Account_Data"("Account_ID") ON DELETE RESTRICT ON UPDATE CASCADE,
-  "To_Account" CHAR(64) REFERENCES "Account_Data"("Account_ID") ON DELETE RESTRICT ON UPDATE CASCADE
+  "To_Account" CHAR(64)
 );
